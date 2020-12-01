@@ -76,59 +76,13 @@ public:
             });
     }
 
-    template <typename KeyMapper>
-    vector<Document> FindTopDocuments(const string& raw_query, KeyMapper key_mapper) const {            
-        const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query);
-
-        sort(matched_documents.begin(), matched_documents.end(),
-             [](const Document& lhs, const Document& rhs) {                                
-                if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
-                    return lhs.rating > rhs.rating;
-                } else {
-                    return lhs.relevance > rhs.relevance;
-                }
-             });
-                
-        matched_documents.erase(remove_if(matched_documents.begin(), matched_documents.end(),
-                                         [this, &key_mapper](const Document& element) {                        
-                                            return !key_mapper(element.id, documents_.at(element.id).status, element.rating);
-                                         }), 
-                                matched_documents.end()
-                               );
-        
-        
-        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-        }
-        return matched_documents;
+    template <typename KeyPredicate>
+    vector<Document> FindTopDocuments(const string& raw_query, KeyPredicate key_predicate) const {            
+        return SortByResize(raw_query, key_predicate);
     }
     
-    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {       
-        const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query);
- 
-        sort(matched_documents.begin(), matched_documents.end(),
-             [](const Document& lhs, const Document& rhs) {                                
-                if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
-                    return lhs.rating > rhs.rating;
-                } else {
-                    return lhs.relevance > rhs.relevance;
-                }
-             });
-        
-        matched_documents.erase(remove_if(matched_documents.begin(), matched_documents.end(),
-                                         [this, &status](const Document& element) {                        
-                                            return documents_.at(element.id).status != status;
-                                         }), 
-                                matched_documents.end()
-                               );
-
-        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-        }
-        
-        return matched_documents;
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {            
+        return SortByResize(raw_query, status);
     }
 
     int GetDocumentCount() const {
@@ -230,20 +184,50 @@ private:
         return query;
     }
     
+    template <typename KeyMapper>
+    vector<Document> SortByResize(const string& raw_query, KeyMapper key_mapper) const {
+        const Query query = ParseQuery(raw_query);
+        auto matched_documents = FindAllDocuments(query, key_mapper); 
+
+        sort(matched_documents.begin(), matched_documents.end(),
+             [](const Document& lhs, const Document& rhs) {                                
+                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                     return lhs.rating > rhs.rating;
+                 } else {
+                     return lhs.relevance > rhs.relevance;
+                 }
+             });
+
+        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+        }
+
+        return matched_documents;
+    }
+    
     // Existence required
     double ComputeWordInverseDocumentFreq(const string& word) const {
         return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
-    vector<Document> FindAllDocuments(const Query& query) const {
+    template <typename KeyMapper>
+    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const {
         map<int, double> document_to_relevance;
         for (const string& word : query.plus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
-                document_to_relevance[document_id] += term_freq * inverse_document_freq;
+            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {           
+                if constexpr (is_same_v<KeyMapper, DocumentStatus>) {
+                    if (documents_.at(document_id).status == key_mapper) {
+                        document_to_relevance[document_id] += term_freq * inverse_document_freq;
+                    }
+                } else {
+                    if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) {
+                        document_to_relevance[document_id] += term_freq * inverse_document_freq;
+                    }
+                }
             }
         }
         
