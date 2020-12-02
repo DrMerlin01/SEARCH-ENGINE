@@ -38,10 +38,10 @@ vector<string> SplitIntoWords(const string& text) {
         }
     }
     words.push_back(word);
-    
+
     return words;
 }
-    
+
 struct Document {
     int id;
     double relevance;
@@ -56,13 +56,13 @@ enum class DocumentStatus {
 };
 
 class SearchServer {
-public:
+    public:
     void SetStopWords(const string& text) {
         for (const string& word : SplitIntoWords(text)) {
             stop_words_.insert(word);
         }
     }    
-    
+
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
@@ -70,25 +70,31 @@ public:
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
         documents_.emplace(document_id, 
-            DocumentData{
-                ComputeAverageRating(ratings), 
-                status
-            });
+                           DocumentData{
+                               ComputeAverageRating(ratings), 
+                               status
+                               });
     }
 
     template <typename KeyPredicate>
     vector<Document> FindTopDocuments(const string& raw_query, KeyPredicate key_predicate) const {            
-        return SortByResize(raw_query, key_predicate);
+        const Query query = ParseQuery(raw_query);
+        auto matched_documents = FindAllDocuments(query, key_predicate);
+
+        return SortByResize(matched_documents);
     }
-    
+
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {            
-        return SortByResize(raw_query, status);
+        const Query query = ParseQuery(raw_query);
+        auto matched_documents = FindAllDocuments(query, [&status](int document_id, DocumentStatus document_status, int rating) { return document_status == status; });
+
+        return SortByResize(matched_documents);
     }
 
     int GetDocumentCount() const {
         return documents_.size();
     }
-    
+
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
@@ -111,8 +117,8 @@ public:
         }
         return {matched_words, documents_.at(document_id).status};
     }
-    
-private:
+
+    private:
     struct DocumentData {
         int rating;
         DocumentStatus status;
@@ -121,11 +127,11 @@ private:
     set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
-    
+
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word) > 0;
     }
-    
+
     vector<string> SplitIntoWordsNoStop(const string& text) const {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
@@ -135,7 +141,7 @@ private:
         }
         return words;
     }
-    
+
     static int ComputeAverageRating(const vector<int>& ratings) {
         int rating_sum = 0;
         for (const int rating : ratings) {
@@ -143,13 +149,13 @@ private:
         }
         return rating_sum / static_cast<int>(ratings.size());
     }
-    
+
     struct QueryWord {
         string data;
         bool is_minus;
         bool is_stop;
     };
-    
+
     QueryWord ParseQueryWord(string text) const {
         bool is_minus = false;
         // Word shouldn't be empty
@@ -161,14 +167,14 @@ private:
             text,
             is_minus,
             IsStopWord(text)
-        };
+            };
     }
-    
+
     struct Query {
         set<string> plus_words;
         set<string> minus_words;
     };
-    
+
     Query ParseQuery(const string& text) const {
         Query query;
         for (const string& word : SplitIntoWords(text)) {
@@ -183,12 +189,8 @@ private:
         }
         return query;
     }
-    
-    template <typename KeyMapper>
-    vector<Document> SortByResize(const string& raw_query, KeyMapper key_mapper) const {
-        const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query, key_mapper); 
 
+    vector<Document> SortByResize(vector<Document>& matched_documents) const {
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {                                
                  if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
@@ -204,14 +206,18 @@ private:
 
         return matched_documents;
     }
-    
+
     // Existence required
     double ComputeWordInverseDocumentFreq(const string& word) const {
         return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
-    template <typename KeyMapper>
-    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const {
+    //Дмитрий, хотелось бы уточнить, если конечно это возможно, получается сейчас у функции FindAllDocuments все параметры воспринимаются однозначно
+    //и я ушел от использования constexpr, т.е. вроде бы все хорошо, но вот беспокоит один момент, у метода FindTopDocuments, где второй параметр статус
+    //насколько критично, что я дальше передаю люмбду, но с лишними параметрами, которые в большинстве своем, никогда не будут использоваться?
+    //Допустим ли вообще такой подход с точки зрения ревью?
+    template <typename KeyPredicate>
+    vector<Document> FindAllDocuments(const Query& query, KeyPredicate key_predicate) const {
         map<int, double> document_to_relevance;
         for (const string& word : query.plus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
@@ -219,18 +225,14 @@ private:
             }
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
             for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {           
-                if constexpr (is_same_v<KeyMapper, DocumentStatus>) {
-                    if (documents_.at(document_id).status == key_mapper) {
-                        document_to_relevance[document_id] += term_freq * inverse_document_freq;
-                    }
-                } else {
-                    if (key_mapper(document_id, documents_.at(document_id).status, documents_.at(document_id).rating)) {
-                        document_to_relevance[document_id] += term_freq * inverse_document_freq;
-                    }
+                const DocumentData& document = documents_.at(document_id);
+                if (key_predicate(document_id, document.status, document.rating)) {
+                    document_to_relevance[document_id] += term_freq * inverse_document_freq;
                 }
+
             }
         }
-        
+
         for (const string& word : query.minus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
@@ -246,7 +248,7 @@ private:
                 document_id,
                 relevance,
                 documents_.at(document_id).rating
-            });
+                });
         }
         return matched_documents;
     }
@@ -256,10 +258,10 @@ private:
 
 void PrintDocument(const Document& document) {
     cout << "{ "s
-         << "document_id = "s << document.id << ", "s
-         << "relevance = "s << document.relevance << ", "s
-         << "rating = "s << document.rating
-         << " }"s << endl;
+        << "document_id = "s << document.id << ", "s
+        << "relevance = "s << document.relevance << ", "s
+        << "rating = "s << document.rating
+        << " }"s << endl;
 }
 
 int main() {
