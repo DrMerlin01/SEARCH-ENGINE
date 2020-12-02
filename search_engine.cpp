@@ -81,14 +81,24 @@ class SearchServer {
         const Query query = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query, key_predicate);
 
-        return SortByResize(matched_documents);
+        sort(matched_documents.begin(), matched_documents.end(),
+             [](const Document& lhs, const Document& rhs) {                                
+                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                     return lhs.rating > rhs.rating;
+                 } else {
+                     return lhs.relevance > rhs.relevance;
+                 }
+             });
+
+        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+        }
+
+        return matched_documents;
     }
 
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {            
-        const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query, [&status](int document_id, DocumentStatus document_status, int rating) { return document_status == status; });
-
-        return SortByResize(matched_documents);
+        return FindTopDocuments(raw_query, [&status](int document_id, DocumentStatus document_status, int rating) { return document_status == status; });;
     }
 
     int GetDocumentCount() const {
@@ -190,32 +200,11 @@ class SearchServer {
         return query;
     }
 
-    vector<Document> SortByResize(vector<Document>& matched_documents) const {
-        sort(matched_documents.begin(), matched_documents.end(),
-             [](const Document& lhs, const Document& rhs) {                                
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
-                     return lhs.rating > rhs.rating;
-                 } else {
-                     return lhs.relevance > rhs.relevance;
-                 }
-             });
-
-        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-        }
-
-        return matched_documents;
-    }
-
     // Existence required
     double ComputeWordInverseDocumentFreq(const string& word) const {
         return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
-    //Дмитрий, хотелось бы уточнить, если конечно это возможно, получается сейчас у функции FindAllDocuments все параметры воспринимаются однозначно
-    //и я ушел от использования constexpr, т.е. вроде бы все хорошо, но вот беспокоит один момент, у метода FindTopDocuments, где второй параметр статус
-    //насколько критично, что я дальше передаю люмбду, но с лишними параметрами, которые в большинстве своем, никогда не будут использоваться?
-    //Допустим ли вообще такой подход с точки зрения ревью?
     template <typename KeyPredicate>
     vector<Document> FindAllDocuments(const Query& query, KeyPredicate key_predicate) const {
         map<int, double> document_to_relevance;
