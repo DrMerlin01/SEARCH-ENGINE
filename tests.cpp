@@ -101,7 +101,7 @@ void TestSortByRelevance() {
 	  server.SetStopWords("и в на");
 	  server.AddDocument(42, "белый кот и модный ошейник"s, DocumentStatus::BANNED, {1, 2, 3});
 	  server.AddDocument(48, "пушистый кот пушистый хвост"s, DocumentStatus::BANNED, {4, 5, 6});
-	  server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::ACTUAL, {-1, 12, -6});
+	  server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::BANNED, {-1, 12, -6});
 	  const auto found_docs = server.FindTopDocuments("пушистый ухоженный кот"s, DocumentStatus::BANNED);
 	  ASSERT_EQUAL(found_docs.size(), 3);
 	  const Document& doc0 = found_docs[0];
