@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -47,11 +48,8 @@ vector<string> SplitIntoWords(const string& text) {
 struct Document {
     Document() = default;
 
-    Document(int id, double relevance, int rating)
-        : id(id)
-            , relevance(relevance)
-            , rating(rating) {
-        }
+    Document(int id, double relevance, int rating) : id(id), relevance(relevance), rating(rating) {
+    }
 
     int id = 0;
     double relevance = 0.0;
@@ -60,35 +58,31 @@ struct Document {
 
 template <typename StringContainer>
 set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
-set<string> non_empty_strings;
-for (const string& str : strings) {
-  if (!str.empty()) {
-		non_empty_strings.insert(str);
-  }
-}
-return non_empty_strings;
+    set<string> non_empty_strings;
+    for (const string& str : strings) {
+      if (!str.empty()) {
+            non_empty_strings.insert(str);
+      }
+    }
+    return non_empty_strings;
 }
 
 enum class DocumentStatus {
-ACTUAL,
-IRRELEVANT,
-BANNED,
-REMOVED,
+    ACTUAL,
+    IRRELEVANT,
+    BANNED,
+    REMOVED,
 };
 
 class SearchServer {
     public:
-    // Defines an invalid document id
-    // You can refer this constant as SearchServer::INVALID_DOCUMENT_ID
-    inline static constexpr int INVALID_DOCUMENT_ID = -1;
-
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words) : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-        IsValidStopWords(stop_words_);
+        SearchInvalidCharacters(stop_words_);
     }
 
     explicit SearchServer(const string& stop_words_text) : SearchServer(SplitIntoWords(stop_words_text)) {// Invoke delegating constructor from string container
-        IsValidStopWords(stop_words_);
+       
     }
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
@@ -136,10 +130,7 @@ class SearchServer {
     }
 
     int GetDocumentId(int index) const {
-        if (index >= 0 && index < GetDocumentCount()) {
-            return document_ids_[index];
-        }
-        throw out_of_range("Индекс документа выходит за допустимый диапазон (0; количество документов).");
+        return document_ids_.at(index);
     }
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
@@ -162,7 +153,7 @@ class SearchServer {
                 break;
             }
         }
-        return tuple{matched_words, documents_.at(document_id).status};
+        return {matched_words, documents_.at(document_id).status};
     }
 
     private:
@@ -186,7 +177,7 @@ class SearchServer {
         });
     }
 
-    void IsValidStopWords(const set<string>& stop_words) {
+    void SearchInvalidCharacters(const set<string>& stop_words) {
         for(const string& str : stop_words) {
             if (!IsValidWord(str)) {
                 throw invalid_argument("Множество стоп-слов содержит недопустимые символы.");
@@ -235,12 +226,12 @@ class SearchServer {
             text = text.substr(1);
         }
 
-        if(!IsValidWord(text)) {
-            throw invalid_argument("Запрос содержит недопустимые символы.");
+        if(text.empty()) {
+            throw invalid_argument("В запросе отсутствуют слова после знака \"-\".");
         } else if(text[0] == '-') {
             throw invalid_argument("Запрос содержит более одного знака \"-\" для минус-слов.");
-        } else if(text.empty()) {
-            throw invalid_argument("В запросе отсутствуют слова после знака \"-\".");
+        } else if(!IsValidWord(text)) {
+            throw invalid_argument("Запрос содержит недопустимые символы.");
         }
 
         return {
