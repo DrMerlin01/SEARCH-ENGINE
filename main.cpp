@@ -1,6 +1,5 @@
-#include "search_server.h"
-#include "request_queue.h"
 #include "paginator.h"
+#include "request_queue.h"
 #include "read_input_functions.h"
 
 using namespace std;
@@ -25,6 +24,6 @@ int main() {
     request_queue.AddFindRequest("большой ошейник"s);
     // первый запрос удален, 1437 запросов с нулевым результатом
     request_queue.AddFindRequest("скворец"s);
-    std::cout << "Запросов, по которым ничего не нашлось "s << request_queue.GetNoResultRequests();
+    cout << "Запросов, по которым ничего не нашлось "s << request_queue.GetNoResultRequests();
         return 0;
 }

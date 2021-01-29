@@ -5,7 +5,10 @@
 template <typename Iterator>
 class IteratorRange {
 public:
-    IteratorRange(Iterator begin, Iterator end) : first_(begin), last_(end), size_(distance(first_, last_)) {
+    IteratorRange(Iterator begin, Iterator end) 
+	 : first_(begin), 
+	 last_(end), 
+	 size_(distance(first_, last_)) {
 
     }
 
