@@ -1,4 +1,4 @@
-#include "search_engine.cpp"
+#include "search_server.cpp"
 #include "assert.cpp"
 
 // -------- Начало модульных тестов поисковой системы ----------
@@ -155,9 +155,4 @@ void TestSearchServer() {
     RUN_TEST(TestIncludeFindedDocumentsWithPredicate);
     RUN_TEST(TestSortByRelevance);
     RUN_TEST(TestMatchDocuments);
-}
-
-int main() {
-    TestSearchServer();
-    cerr << "Search server testing finished"s << endl;
 }
