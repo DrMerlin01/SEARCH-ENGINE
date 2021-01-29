@@ -13,6 +13,8 @@
 #include "document.h"
 #include "string_processing.h"
 
+using namespace std;
+
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 template <typename StringContainer>
@@ -31,7 +33,7 @@ class SearchServer {
     template <typename StringContainer>
     SearchServer(const StringContainer& stop_words) : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) { // Extract non-empty stop words
         if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
-            throw std::invalid_argument("Some of stop words are invalid");
+            throw std::invalid_argument("Some of stop words are invalid"s);
         }
     }
     SearchServer(const std::string& stop_words_text);
