@@ -9,7 +9,8 @@ class IteratorRange {
 		 IteratorRange(Iterator begin, Iterator end) 
 		 : first_(begin)
        , last_(end)
-       , size_(distance(first_, last_)) {
+       , size_(distance(first_, last_)) 
+		 {
 
 		 }
 
