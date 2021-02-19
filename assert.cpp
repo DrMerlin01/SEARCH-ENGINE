@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <ostream>
 
 template <typename First, typename Second>
 ostream& operator<<(ostream& out, const pair<First, Second>& container) {
