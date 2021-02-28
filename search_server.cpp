@@ -37,15 +37,19 @@ int SearchServer::GetDocumentCount() const {
 }
 
 const map<string, double>& SearchServer::GetWordFrequencies(int document_id) const {
-	return word_to_document_freqs_on_id_.at(document_id);
+	if(word_to_document_freqs_on_id_.count(document_id) == 0) {        
+		return empty_map;
+	} else {
+		return word_to_document_freqs_on_id_.at(document_id);
+	}
 }
 
 void SearchServer::RemoveDocument(int document_id) {
 	document_ids_.erase(document_id);
 	documents_.erase(document_id);
 	word_to_document_freqs_on_id_.erase(document_id);
-	for (auto iter = word_to_document_freqs_.begin(); iter != word_to_document_freqs_.end(); ++iter) {
-		iter->second.erase(document_id);
+	for (auto& [word, array_freqs_] : word_to_document_freqs_) {
+		array_freqs_.erase(document_id);
 	}
 }
 

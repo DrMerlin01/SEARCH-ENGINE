@@ -12,6 +12,7 @@
 #include "string_processing.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const std::map<std::string, double> empty_map;
 
 class SearchServer {
 	public:
@@ -61,7 +62,7 @@ class SearchServer {
 		}
 
 		const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
-
+    
 		void RemoveDocument(int document_id);
     
 		std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
@@ -73,7 +74,7 @@ class SearchServer {
 		};
 		const std::set<std::string> stop_words_;
 		std::map<std::string, std::map<int, double>> word_to_document_freqs_;
-		std::map<int, std::map<std::string, double>> word_to_document_freqs_on_id_;
+      std::map<int, std::map<std::string, double>> word_to_document_freqs_on_id_;
 		std::map<int, DocumentData> documents_;
 		std::set<int> document_ids_;
 

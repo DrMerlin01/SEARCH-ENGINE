@@ -15,15 +15,15 @@ class IteratorRange {
 		}
 
 		Iterator begin() const {
-		  return first_;
+			return first_;
 		}
 
 		Iterator end() const {
-		  return last_;
+			return last_;
 		}
 
 		size_t size() const {
-		  return size_;
+			return size_;
 		}
 
 	private:
