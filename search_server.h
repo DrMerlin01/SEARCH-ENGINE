@@ -12,7 +12,6 @@
 #include "string_processing.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
-const std::map<std::string, double> empty_map;
 
 class SearchServer {
 	public:

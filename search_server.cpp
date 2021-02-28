@@ -37,7 +37,8 @@ int SearchServer::GetDocumentCount() const {
 }
 
 const map<string, double>& SearchServer::GetWordFrequencies(int document_id) const {
-	if(word_to_document_freqs_on_id_.count(document_id) == 0) {        
+	if(word_to_document_freqs_on_id_.count(document_id) == 0) {      
+		static const std::map<std::string, double> empty_map;
 		return empty_map;
 	} else {
 		return word_to_document_freqs_on_id_.at(document_id);
