@@ -5,9 +5,9 @@
 using namespace std;
 
 void AddDocument(SearchServer& search_server, int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
-	try {
-		search_server.AddDocument(document_id, document, status, ratings);
-	} catch (const exception& e) {
-		cout << "Ошибка добавления документа "s << document_id << ": "s << e.what() << endl;
-	}
+    try {
+        search_server.AddDocument(document_id, document, status, ratings);
+    } catch (const exception& e) {
+        cout << "Ошибка добавления документа "s << document_id << ": "s << e.what() << endl;
+    }
 }

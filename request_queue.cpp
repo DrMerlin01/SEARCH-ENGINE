@@ -6,8 +6,7 @@ RequestQueue::RequestQueue(const SearchServer& search_server)
 	: search_server_(search_server)
 	, no_results_requests_(0)
 	, current_time_(0) 
-	{
-
+{
 }
 
 vector<Document> RequestQueue::RequestQueue::AddFindRequest(const string& raw_query, DocumentStatus status) {
@@ -35,7 +34,7 @@ void RequestQueue::AddRequest(int results_num) {
 		}
 		requests_.pop_front();
 	}
-    
+	
 	requests_.push_back({current_time_, results_num});
 	if (0 == results_num) {
 		++no_results_requests_;

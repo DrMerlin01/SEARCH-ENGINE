@@ -10,6 +10,7 @@ using namespace std;
 void RemoveDuplicates(SearchServer& search_server) {
 	map<set<string>, int> document_content;
 	vector<int> list_remove;
+	
 	for (const int document_id : search_server) {
 		set<string> content;
 		for (const auto [word, freq] : search_server.GetWordFrequencies(document_id)) {
