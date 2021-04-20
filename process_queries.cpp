@@ -20,10 +20,7 @@ vector<Document> ProcessQueriesJoined(const SearchServer& search_server, const v
 	vector<Document> result;
 	
 	for(const auto& documents : ProcessQueries(search_server, queries)) {
-		move(execution::par,
-			 documents.begin(), documents.end(),
-			 back_inserter(result)
-			);
+		result.insert(result.end(), documents.begin(), documents.end());
 	}
 	
 	return result;
