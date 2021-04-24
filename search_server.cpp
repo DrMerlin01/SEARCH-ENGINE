@@ -1,5 +1,5 @@
 #include "search_server.h"
-#include <cmath>
+#include <atomic>
 
 using namespace std;
 
@@ -15,21 +15,20 @@ void SearchServer::AddDocument(int document_id, string_view document, DocumentSt
 
 	const double inv_word_count = 1.0 / words.size();
 	for (const string_view word : words) {
-		word_to_document_freqs_[static_cast<string>(word)][document_id] += inv_word_count;
-		word_to_document_freqs_on_id_[document_id][word_to_document_freqs_.find(word)->first] += inv_word_count;
+		auto result = all_words_.insert(static_cast<string>(word));
+		word_to_document_freqs_[*result.first][document_id] += inv_word_count;
+		word_to_document_freqs_on_id_[document_id][*result.first] += inv_word_count;
 	}
 	documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
 	document_ids_.insert(document_id);
 }
 
 vector<Document> SearchServer::FindTopDocuments(string_view raw_query, DocumentStatus status) const {
-	return FindTopDocuments(execution::seq, raw_query, [status](int document_id, DocumentStatus document_status, int rating) {
-		return document_status == status;
-	});
+	return FindTopDocuments(execution::seq, raw_query, status);
 }
 
 vector<Document> SearchServer::FindTopDocuments(string_view raw_query) const {
-	return FindTopDocuments(execution::seq, raw_query, DocumentStatus::ACTUAL);
+	return FindTopDocuments(execution::seq, raw_query);
 }
 
 int SearchServer::GetDocumentCount() const {
@@ -37,7 +36,7 @@ int SearchServer::GetDocumentCount() const {
 }
 
 const map<string_view, double>& SearchServer::GetWordFrequencies(int document_id) const { 
-	if(word_to_document_freqs_on_id_.count(document_id) == 0) {
+	if(word_to_document_freqs_on_id_.count(document_id) == 0) {        
 		const static map<string_view, double> result;
 		return result;
 	} else {
@@ -51,6 +50,65 @@ void SearchServer::RemoveDocument(int document_id) {
 
 tuple<vector<string_view>, DocumentStatus> SearchServer::MatchDocument(string_view raw_query, int document_id) const {
 	return MatchDocument(execution::seq, raw_query, document_id);
+}
+
+tuple<vector<string_view>, DocumentStatus> SearchServer::MatchDocument(const execution::sequenced_policy&, string_view raw_query, int document_id) const {
+	const auto query = ParseQuery(raw_query);
+	vector<string_view> matched_words;
+
+	for (const string_view word : query.plus_words) {
+		if (word_to_document_freqs_.count(word) == 0) {
+			continue;
+		}
+		if (word_to_document_freqs_.at(word).count(document_id)) {
+			matched_words.push_back(word);
+		}
+	}
+	
+	for (const string_view word : query.minus_words) {
+		if (word_to_document_freqs_.count(word) == 0) {
+			continue;
+		}
+		if (word_to_document_freqs_.at(word).count(document_id)) {
+			matched_words.clear();
+			break;
+		}
+	}
+	
+	return {matched_words, documents_.at(document_id).status};
+}
+
+tuple<vector<string_view>, DocumentStatus> SearchServer::MatchDocument(const execution::parallel_policy&, string_view raw_query, int document_id) const {
+	const auto query = ParseQuery(raw_query);
+	vector<string_view> matched_words(query.plus_words.size());
+	atomic_int size = 0;
+
+	for_each(execution::par,
+			 query.plus_words.begin(), query.plus_words.end(),
+			 [&matched_words, &size, &document_id, this](const string_view word) {
+				 if (word_to_document_freqs_.count(word) == 0) {
+					 return;
+				 }
+				 if (word_to_document_freqs_.at(word).count(document_id)) {
+					 matched_words[size++] = word;
+				 }
+			 });
+	
+	matched_words.resize(size);
+	
+	for_each(execution::par,
+			 query.minus_words.begin(), query.minus_words.end(),
+			 [&matched_words, &document_id, this](const std::string_view word) {
+				 if (word_to_document_freqs_.count(word) == 0) {
+					 return;
+				 }
+				 if (!matched_words.empty() && word_to_document_freqs_.at(word).count(document_id)) {
+					 matched_words.clear();
+					 return;
+				 }
+			 });
+
+	return {matched_words, documents_.at(document_id).status};
 }
 
 bool SearchServer::IsStopWord(string_view word) const {
@@ -98,7 +156,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
 		text.remove_prefix(1);
 	}
 	if (text.empty() || text[0] == '-' || !IsValidWord(text)) {
-		throw invalid_argument("Query word "s  + static_cast<string>(text) + " is invalid"s);
+		throw invalid_argument("Query word "s + static_cast<string>(text) + " is invalid"s);
 	}
 	return {text, is_minus, IsStopWord(text)};
 }
@@ -120,5 +178,5 @@ SearchServer::Query SearchServer::ParseQuery(string_view text) const {
 
 // Existence required
 double SearchServer::ComputeWordInverseDocumentFreq(string_view word) const {
-	return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(static_cast<string>(word)).size());
+	return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
 }
