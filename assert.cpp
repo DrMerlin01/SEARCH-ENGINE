@@ -23,6 +23,7 @@ ostream& Print(ostream& out, const Container& container) {
 
 		out << element;
 	}
+
 	return out;
 }
 
@@ -31,6 +32,7 @@ ostream& operator<<(ostream& out, const vector<Term>& container) {
 	out << "["s;
 	Print(out, container);
 	out << "]"s;
+
 	return out;
 }
 
@@ -39,6 +41,7 @@ ostream& operator<<(ostream& out, const set<Term>& container) {
 	out << "{"s;
 	Print(out, container);
 	out << "}"s;
+
 	return out;
 }
 
@@ -47,6 +50,7 @@ ostream& operator<<(ostream& out, const map<Key, Value>& container) {
 	out << "{"s;
 	Print(out, container);
 	out << "}"s;
+
 	return out;
 }
 

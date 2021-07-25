@@ -16,6 +16,6 @@ std::set<std::string, std::less<>> MakeUniqueNonEmptyStrings(const StringContain
 			non_empty_strings.insert(static_cast<std::string>(str));
 		}
 	}
-	
+
 	return non_empty_strings;
 }

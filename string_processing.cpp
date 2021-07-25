@@ -13,6 +13,6 @@ vector<string_view> SplitIntoWords(string_view text) {
 			text.remove_prefix(space + 1);
 		}
 	}
-	
+
 	return words;
 }

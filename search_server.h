@@ -43,7 +43,7 @@ public:
 	std::vector<Document> FindTopDocuments(const ExecutionPolicy& policy, std::string_view raw_query, DocumentPredicate document_predicate) const {
 		const auto query = ParseQuery(raw_query);
 		auto matched_documents = FindAllDocuments(policy, query, document_predicate);
-		
+
 		std::sort(matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
 			if (std::abs(lhs.relevance - rhs.relevance) < 1e-6) {
 				return lhs.rating > rhs.rating;
@@ -51,7 +51,7 @@ public:
 				return lhs.relevance > rhs.relevance;
 			}
 		}); 
-		
+
 		if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
 			matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
 		}
@@ -82,7 +82,7 @@ public:
 	}
 
 	const std::map<std::string_view, double>& GetWordFrequencies(int document_id) const;
-	
+
 	void RemoveDocument(int document_id);
 
 	template<typename  ExecutionPolicy>
@@ -145,7 +145,7 @@ private:
 		std::map<int, double> document_to_relevance;
 
 		for (std::string_view word : query.plus_words) {
-			if (word_to_document_freqs_.count(word) == 0) {
+			if (word_to_document_freqs_.count(word) == 0U) {
 				continue;
 			}
 			const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
@@ -156,9 +156,9 @@ private:
 				}
 			}
 		}
-		
+
 		for (std::string_view word : query.minus_words) {
-			if (word_to_document_freqs_.count(word) == 0) {
+			if (word_to_document_freqs_.count(word) == 0U) {
 				continue;
 			}
 			for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
@@ -176,11 +176,11 @@ private:
 	template <typename DocumentPredicate>
 	std::vector<Document> FindAllDocuments(const std::execution::parallel_policy&, const Query& query, DocumentPredicate document_predicate) const {
 		ConcurrentMap<int, double> document_to_relevance(3);
-		
+
 		for_each(std::execution::par,
 				 query.plus_words.begin(), query.plus_words.end(),
 				 [&document_to_relevance, &document_predicate, this](const std::string_view word) {
-					if (word_to_document_freqs_.count(word) == 0) {
+					if (word_to_document_freqs_.count(word) == 0U) {
 						return;
 					}
 					const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
@@ -191,11 +191,11 @@ private:
 						}
 					}
 				});
-		
+
 		for_each(std::execution::par,
 				 query.minus_words.begin(), query.minus_words.end(),
 				 [&document_to_relevance, this](const std::string_view word) {
-					if (word_to_document_freqs_.count(word) == 0) {
+					if (word_to_document_freqs_.count(word) == 0U) {
 						return;
 					}
 					for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
@@ -207,6 +207,7 @@ private:
 		for (const auto [document_id, relevance] : document_to_relevance.BuildOrdinaryMap()) {
 			matched_documents.push_back({document_id, relevance, documents_.at(document_id).rating});
 		}
+
 		return matched_documents;
 	}
 };

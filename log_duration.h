@@ -18,9 +18,7 @@ public:
 
 	LogDuration(const std::string& id, std::ostream& out = std::cerr)
 	: id_(id)
-	, out_(out) 
-	{
-
+	, out_(out) {
 	}
 
 	~LogDuration() {
