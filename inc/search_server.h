@@ -11,6 +11,7 @@
 #include <functional>
 #include <cmath>
 #include <execution>
+
 #include "document.h"
 #include "string_processing.h"
 #include "concurrent_map.h"

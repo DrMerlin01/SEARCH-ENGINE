@@ -1,9 +1,11 @@
-#include "search_server.h"
+#include "../inc/search_server.h"
+
 #include <atomic>
 
 using namespace std;
 
-SearchServer::SearchServer(const string& stop_words_text) : SearchServer(SplitIntoWords(stop_words_text)) { // Invoke delegating constructor
+SearchServer::SearchServer(const string& stop_words_text) 
+	: SearchServer(SplitIntoWords(stop_words_text)) { // Invoke delegating constructor
 	// from string container
 }
 
@@ -130,6 +132,7 @@ vector<string_view> SearchServer::SplitIntoWordsNoStop(string_view text) const {
 		if (!IsValidWord(word)) {
 			throw invalid_argument("Word "s + static_cast<string>(word) + " is invalid"s);
 		}
+		
 		if (!IsStopWord(word)) {
 			words.push_back(word);
 		}
@@ -142,6 +145,7 @@ int SearchServer::ComputeAverageRating(const vector<int>& ratings) {
 	if (ratings.empty()) {
 		return 0;
 	}
+	
 	int rating_sum = 0;
 	for (const int rating : ratings) {
 		rating_sum += rating;
@@ -154,11 +158,13 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
 	if (text.empty()) {
 		throw invalid_argument("Query word is empty"s);
 	}
+
 	bool is_minus = false;
 	if (text[0] == '-') {
 		is_minus = true;
 		text.remove_prefix(1);
 	}
+
 	if (text.empty() || text[0] == '-' || !IsValidWord(text)) {
 		throw invalid_argument("Query word "s + static_cast<string>(text) + " is invalid"s);
 	}
@@ -168,6 +174,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
 
 SearchServer::Query SearchServer::ParseQuery(string_view text) const {
 	Query result;
+
 	for (const string_view word : SplitIntoWords(text)) {
 		const auto query_word = ParseQueryWord(word);
 		if (!query_word.is_stop) {

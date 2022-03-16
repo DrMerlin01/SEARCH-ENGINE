@@ -1,5 +1,5 @@
-#include "process_queries.h"
-#include "search_server.h"
+#include "../inc/process_queries.h"
+#include "../inc/search_server.h"
 
 #include <execution>
 #include <iostream>

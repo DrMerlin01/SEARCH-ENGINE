@@ -1,4 +1,4 @@
-#include "document.h"
+#include "../inc/document.h"
 
 using namespace std;
 

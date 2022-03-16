@@ -1,4 +1,5 @@
-#include "remove_duplicates.h"
+#include "../inc/remove_duplicates.h"
+
 #include <iostream>
 #include <map>
 #include <set>
@@ -14,7 +15,7 @@ void RemoveDuplicates(SearchServer& search_server) {
 	for (const int document_id : search_server) {
 		set<string> content;
 		for (const auto [word, freq] : search_server.GetWordFrequencies(document_id)) {
-			content.insert(word);
+			content.insert(string(word));
 		}
 		if (document_content.count(content) == 0U) {
 			document_content.insert({content, document_id});

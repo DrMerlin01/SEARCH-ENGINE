@@ -1,4 +1,4 @@
-#include "request_queue.h"
+#include "../inc/request_queue.h"
 
 using namespace std;
 
@@ -34,8 +34,7 @@ void RequestQueue::AddRequest(int results_num) {
 			--no_results_requests_;
 		}
 		requests_.pop_front();
-	}
-	
+	}	
 	requests_.push_back({current_time_, results_num});
 	if (0 == results_num) {
 		++no_results_requests_;

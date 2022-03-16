@@ -1,5 +1,5 @@
-#include "search_server.cpp"
-#include "assert.cpp"
+#include "../inc/search_server.h"
+#include "../inc/assert.h"
 
 // -------- Начало модульных тестов поисковой системы ----------
 void TestExcludeStopWordsFromAddedDocumentContent() {
@@ -7,7 +7,7 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
 	const string content = "cat in the city"s;
 	const vector<int> ratings = {1, 2, 3};
 	{
-		SearchServer server;
+		SearchServer server(""s);
 		server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
 		const auto found_docs = server.FindTopDocuments("in"s);
 		ASSERT_EQUAL(found_docs.size(), 1U);
@@ -16,15 +16,14 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
 	}
 
 	{
-		SearchServer server;
-		server.SetStopWords("in the"s);
+		SearchServer server("in the"s);
 		server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
 		ASSERT_HINT(server.FindTopDocuments("in"s).empty(), "Stop words must be excluded from documents"s);
 	}
 }
 
 void TestExcludeDocumentsWithMinusWords() {
-	SearchServer server;
+	SearchServer server(""s);
 	server.AddDocument(42, "cat in the city"s, DocumentStatus::ACTUAL, {1, 2, 3});
 	server.AddDocument(48, "oh my my in"s, DocumentStatus::ACTUAL, {4, 5, 6});
 	ASSERT_EQUAL(server.FindTopDocuments("in city"s).size(), 2U);
@@ -33,7 +32,7 @@ void TestExcludeDocumentsWithMinusWords() {
 }
 
 void TestComputeRatings() {
-	SearchServer server;
+	SearchServer server(""s);
 	server.AddDocument(42, "cat in the city"s, DocumentStatus::ACTUAL, {1, 2, 3});
 	server.AddDocument(48, "oh my my in"s, DocumentStatus::ACTUAL, {4, 5, 6});
 	const auto found_docs = server.FindTopDocuments("in -city"s);
@@ -43,7 +42,7 @@ void TestComputeRatings() {
 }
 
 void TestIncludeFindedDocumentsWithStatus() {
-	SearchServer server;
+	SearchServer server(""s);
 	server.AddDocument(42, "cat in the city"s, DocumentStatus::IRRELEVANT, {1, 2, 3});
 	server.AddDocument(48, "oh my my in"s, DocumentStatus::BANNED, {4, 5, 6});
 
@@ -69,14 +68,14 @@ void TestIncludeFindedDocumentsWithPredicate() {
 	const vector<int> ratings_1 = {4, 5, 6};
 
 	{
-		SearchServer server;
+		SearchServer server(""s);
 		server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
 		server.AddDocument(doc_id_1, content_1, DocumentStatus::ACTUAL, ratings_1);
 		ASSERT_EQUAL(server.FindTopDocuments("in"s).size(), 2U);
 	}
 
 	{
-		SearchServer server;
+		SearchServer server(""s);
 		server.AddDocument(doc_id, content, DocumentStatus::IRRELEVANT, ratings);
 		server.AddDocument(doc_id_1, content_1, DocumentStatus::BANNED, ratings_1);
 		const auto found_docs = server.FindTopDocuments("in"s, [](int document_id, DocumentStatus status, int rating) { return document_id % 42 == 0; });
@@ -86,7 +85,7 @@ void TestIncludeFindedDocumentsWithPredicate() {
 	}
 
 	{
-		SearchServer server;
+		SearchServer server(""s);
 		server.AddDocument(doc_id, content, DocumentStatus::IRRELEVANT, ratings);
 		server.AddDocument(doc_id_1, content_1, DocumentStatus::BANNED, ratings_1);
 		const auto found_docs = server.FindTopDocuments("in"s, [](int document_id, DocumentStatus status, int rating) { return rating > 4; });
@@ -97,8 +96,7 @@ void TestIncludeFindedDocumentsWithPredicate() {
 }
 
 void TestSortByRelevance() {
-	SearchServer server;
-	server.SetStopWords("и в на");
+	SearchServer server("и в на"s);
 	server.AddDocument(42, "белый кот и модный ошейник"s, DocumentStatus::BANNED, {1, 2, 3});
 	server.AddDocument(48, "пушистый кот пушистый хвост"s, DocumentStatus::BANNED, {4, 5, 6});
 	server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::BANNED, {-1, 12, -6});
@@ -112,8 +110,7 @@ void TestSortByRelevance() {
 }
 
 void TestComputeRelevance() {
-	SearchServer server;
-	server.SetStopWords("и в на");
+	SearchServer server("и в на"s);
 	server.AddDocument(42, "белый кот и модный ошейник"s, DocumentStatus::BANNED, {1, 2, 3});
 	server.AddDocument(48, "пушистый кот пушистый хвост"s, DocumentStatus::BANNED, {4, 5, 6});
 	server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::BANNED, {-1, 12, -6});
@@ -128,7 +125,7 @@ void TestComputeRelevance() {
 }
 
 void TestMatchDocuments() {	 
-	SearchServer server;
+	SearchServer server(""s);
 	server.AddDocument(42, "белый кот и модный ошейник"s, DocumentStatus::BANNED, {1, 2, 3});
 	server.AddDocument(48, "пушистый кот пушистый хвост"s, DocumentStatus::BANNED, {4, 5, 6});
 	server.AddDocument(2, "ухоженный пёс выразительные глаза"s, DocumentStatus::BANNED, {-1, 12, -6});

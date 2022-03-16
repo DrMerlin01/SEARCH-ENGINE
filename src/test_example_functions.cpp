@@ -1,4 +1,5 @@
-#include "test_example_functions.h"
+#include "../inc/test_example_functions.h"
+
 #include <iostream>
 #include <stdexcept>
 
