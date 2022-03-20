@@ -1,5 +1,6 @@
 #include "../inc/process_queries.h"
 #include "../inc/search_server.h"
+#include "../inc/tests.h"
 
 #include <execution>
 #include <iostream>
@@ -16,6 +17,8 @@ void PrintDocument(const Document& document) {
 }
 
 int main() {
+	TestSearchServer();
+
 	SearchServer search_server("and with"s);
 	int id = 0;
 
@@ -33,6 +36,7 @@ int main() {
 	for (const Document& document : search_server.FindTopDocuments("curly nasty cat"s)) {
 		PrintDocument(document);
 	}
+
 	cout << "BANNED:"s << endl;
 	// последовательная версия
 	for (const Document& document : search_server.FindTopDocuments(execution::seq, "curly nasty cat"s, DocumentStatus::BANNED)) {

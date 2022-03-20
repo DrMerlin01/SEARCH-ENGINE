@@ -14,14 +14,16 @@ set(INCLUDE_DIR inc)
 set(SOURCE_DIR src)
 
 set(FILES_MAIN "${SOURCE_DIR}/main.cpp")
-set(FILES_TESTS "${SOURCE_DIR}/tests.cpp" "${INCLUDE_DIR}/assert.h")
-SET(FILES_SEARCH_ENGINE "${SOURCE_DIR}/test_example_functions.cpp" 
-                        "${SOURCE_DIR}/string_processing.cpp" 
-                        "${SOURCE_DIR}/search_server.cpp" 
-                        "${SOURCE_DIR}/request_queue.cpp" 
-                        "${SOURCE_DIR}/remove_duplicates.cpp" 
-                        "${SOURCE_DIR}/read_input_functions.cpp" 
-                        "${SOURCE_DIR}/process_queries.cpp" 
+set(FILES_TESTS "${INCLUDE_DIR}/tests.h"
+                "${SOURCE_DIR}/tests.cpp"
+                "${INCLUDE_DIR}/assert.h")
+SET(FILES_SEARCH_ENGINE "${SOURCE_DIR}/test_example_functions.cpp"
+                        "${SOURCE_DIR}/string_processing.cpp"
+                        "${SOURCE_DIR}/search_server.cpp"
+                        "${SOURCE_DIR}/request_queue.cpp"
+                        "${SOURCE_DIR}/remove_duplicates.cpp"
+                        "${SOURCE_DIR}/read_input_functions.cpp"
+                        "${SOURCE_DIR}/process_queries.cpp"
                         "${SOURCE_DIR}/document.cpp"
                         "${INCLUDE_DIR}/concurrent_map.h"
                         "${INCLUDE_DIR}/document.h"

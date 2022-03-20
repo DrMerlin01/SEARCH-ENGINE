@@ -15,4 +15,3 @@ Yandex. The ranking of the results is based on TF-IDF.
   4. TF-IDF
 # Future plans
   1. Add a user interface for adding documents and searching through them
-  2. Add tests for all functionality
