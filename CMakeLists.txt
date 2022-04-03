@@ -10,6 +10,12 @@ else()
     set(SYSTEM_LIBS)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}/JMC")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror -Wno-unused-parameter -Wno-implicit-fallthrough")
+endif()
+
 set(INCLUDE_DIR inc)
 set(SOURCE_DIR src)
 
@@ -17,7 +23,7 @@ set(FILES_MAIN "${SOURCE_DIR}/main.cpp")
 set(FILES_TESTS "${INCLUDE_DIR}/tests.h"
                 "${SOURCE_DIR}/tests.cpp"
                 "${INCLUDE_DIR}/assert.h")
-SET(FILES_SEARCH_ENGINE "${SOURCE_DIR}/test_example_functions.cpp"
+set(FILES_SEARCH_ENGINE "${SOURCE_DIR}/test_example_functions.cpp"
                         "${SOURCE_DIR}/string_processing.cpp"
                         "${SOURCE_DIR}/search_server.cpp"
                         "${SOURCE_DIR}/request_queue.cpp"
@@ -36,7 +42,7 @@ SET(FILES_SEARCH_ENGINE "${SOURCE_DIR}/test_example_functions.cpp"
                         "${INCLUDE_DIR}/search_server.h"
                         "${INCLUDE_DIR}/string_processing.h"
                         "${INCLUDE_DIR}/test_example_functions.h")
-		        
+
 source_group("Source" FILES ${FILES_MAIN})
 source_group("Tests" FILES ${FILES_TESTS})
 source_group("Search Engine" FILES ${FILES_SEARCH_ENGINE})
